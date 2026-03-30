@@ -2,13 +2,24 @@ https://github.com/user-attachments/assets/31b00a7f-db37-4740-9429-4fc6b5dab4fd
 
 # Pronounce MCP
 
-An MCP App that pronounces words aloud using browser speech synthesis. Shows an inline play button next to the word that speaks it in the requested language.
+An MCP App with inline audio buttons for word pronunciation and language learning. Claude writes its full response with `{{word}}` markers that become interactive play buttons rendered inside the widget.
 
-Built with Cloudflare Workers + MCP Apps SDK.
+## Add to Claude
 
-## Usage
+MCP server URL:
 
-Add the MCP server URL to your client and use the `pronounce` tool with a word and BCP 47 language tag (e.g. `fr-FR`, `ja-JP`).
+```
+https://pronounce-mcp.maganuriyev.workers.dev/mcp
+```
+
+Then ask Claude something like "how do I order coffee in French?" or "pronounce these Japanese greetings".
+
+## How it works
+
+1. Claude writes its response as markdown inside the tool's `text` parameter
+2. Words wrapped in `{{double curly braces}}` become inline play buttons
+3. Clicking a button speaks the word using browser speech synthesis
+4. Prefers premium/enhanced system voices when available
 
 ## Development
 
