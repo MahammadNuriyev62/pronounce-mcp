@@ -5,32 +5,114 @@
 }
 
 body {
-  font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+  font-family: var(--font-sans, ui-sans-serif, system-ui, -apple-system, sans-serif);
+  font-size: var(--font-text-md-size, 1rem);
+  font-weight: var(--font-weight-normal, 400);
+  line-height: var(--font-text-md-line-height, 1.75);
+  color: var(--color-text-primary, inherit);
   background: transparent;
   overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 #app {
-  display: inline-flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0;
-  font-size: 14px;
-  line-height: 1.4;
+  padding: 2px 0;
 }
 
-.item {
+/* ── Markdown elements ─────────────────────────────────────────── */
+
+#app > :first-child {
+  margin-top: 0;
+}
+
+#app > :last-child {
+  margin-bottom: 0;
+}
+
+#app p {
+  margin: 0.75em 0;
+}
+
+#app h1, #app h2, #app h3, #app h4, #app h5, #app h6 {
+  font-weight: var(--font-weight-bold, 700);
+  color: var(--color-text-primary, inherit);
+  margin: 1em 0 0.5em;
+}
+
+#app h1 { font-size: var(--font-heading-xl-size, 1.875rem); line-height: var(--font-heading-xl-line-height, 2.25rem); }
+#app h2 { font-size: var(--font-heading-lg-size, 1.5rem); line-height: var(--font-heading-lg-line-height, 2rem); }
+#app h3 { font-size: var(--font-heading-md-size, 1.25rem); line-height: var(--font-heading-md-line-height, 1.75rem); }
+#app h4 { font-size: var(--font-heading-sm-size, 1.125rem); line-height: var(--font-heading-sm-line-height, 1.5rem); }
+
+#app strong {
+  font-weight: var(--font-weight-semibold, 600);
+}
+
+#app em {
+  font-style: italic;
+}
+
+#app ul, #app ol {
+  padding-left: 1.5em;
+  margin: 0.5em 0;
+}
+
+#app li {
+  margin: 0.25em 0;
+}
+
+#app code {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 0.875em;
+  background: var(--color-background-secondary, light-dark(rgba(0,0,0,0.05), rgba(255,255,255,0.1)));
+  padding: 0.15em 0.35em;
+  border-radius: var(--border-radius-sm, 4px);
+}
+
+#app pre {
+  margin: 0.75em 0;
+  padding: 0.75em 1em;
+  background: var(--color-background-secondary, light-dark(rgba(0,0,0,0.05), rgba(255,255,255,0.1)));
+  border-radius: var(--border-radius-md, 8px);
+  overflow-x: auto;
+}
+
+#app pre code {
+  background: none;
+  padding: 0;
+}
+
+#app hr {
+  border: none;
+  border-top: 1px solid var(--color-border-secondary, light-dark(rgba(0,0,0,0.1), rgba(255,255,255,0.1)));
+  margin: 1em 0;
+}
+
+#app blockquote {
+  border-left: 3px solid var(--color-border-secondary, light-dark(rgba(0,0,0,0.15), rgba(255,255,255,0.15)));
+  padding-left: 1em;
+  margin: 0.75em 0;
+  color: var(--color-text-secondary, inherit);
+}
+
+#app a {
+  color: var(--color-text-info, light-dark(#4338ca, #818cf8));
+  text-decoration: underline;
+}
+
+/* ── Pronounce word + button ───────────────────────────────────── */
+
+.pronounce-word {
   display: inline-flex;
   align-items: center;
+  gap: 2px;
   white-space: nowrap;
 }
 
-.sep {
-  color: light-dark(#9ca3af, #6b7280);
-}
-
-.word {
-  color: light-dark(#1f2937, #f3f4f6);
+.word-text {
+  font-weight: var(--font-weight-semibold, 600);
+  color: var(--color-text-info, light-dark(#4338ca, #818cf8));
 }
 
 .speak-btn {
@@ -39,19 +121,19 @@ body {
   justify-content: center;
   width: 18px;
   height: 18px;
-  margin-left: 2px;
   border: none;
   border-radius: 50%;
   background: transparent;
-  color: light-dark(#9ca3af, #6b7280);
+  color: var(--color-text-tertiary, light-dark(#9ca3af, #6b7280));
   cursor: pointer;
   transition: color 0.15s;
   flex-shrink: 0;
   padding: 0;
+  vertical-align: middle;
 }
 
 .speak-btn:hover:not(:disabled) {
-  color: light-dark(#374151, #d1d5db);
+  color: var(--color-text-info, light-dark(#4338ca, #818cf8));
 }
 
 .speak-btn:active:not(:disabled) {
@@ -59,7 +141,7 @@ body {
 }
 
 .speak-btn.speaking {
-  color: #3b82f6;
+  color: var(--color-text-info, #3b82f6);
   animation: pulse 1s ease-in-out infinite;
 }
 

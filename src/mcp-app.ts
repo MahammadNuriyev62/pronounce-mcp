@@ -5,37 +5,58 @@ import {
   applyHostStyleVariables,
   type McpUiHostContext,
 } from "@modelcontextprotocol/ext-apps";
+import { marked } from "marked";
 import "./mcp-app.css";
+
+marked.setOptions({ breaks: true, gfm: true });
 
 // ── State ─────────────────────────────────────────────────────────
 
-let words: string[] = [];
+let text = "";
 let language = "";
 let voiceAvailable = false;
-let speakingIndex = -1;
+let speakingWord = "";
 
 const appEl = document.getElementById("app")!;
 
 // ── Render ────────────────────────────────────────────────────────
 
+function wordButton(word: string): string {
+  const isSpeaking = speakingWord === word;
+  return (
+    `<span class="pronounce-word">` +
+      `<span class="word-text">${word}</span>` +
+      `<button class="speak-btn${isSpeaking ? " speaking" : ""}${!voiceAvailable ? " disabled" : ""}" ` +
+        `data-word="${escapeAttr(word)}" ` +
+        `${!voiceAvailable ? "disabled" : ""} ` +
+        `title="${voiceAvailable ? "Click to hear pronunciation" : "No voice available"}">` +
+        `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">` +
+          `<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>` +
+          `<path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>` +
+        `</svg>` +
+      `</button>` +
+    `</span>`
+  );
+}
+
 function render() {
-  if (!words.length) {
+  if (!text) {
     appEl.innerHTML = "";
     resizeToContent();
     return;
   }
 
-  appEl.innerHTML = words
-    .map((w, i) => {
-      const isSpeaking = speakingIndex === i;
-      return `<span class="item">${i > 0 ? '<span class="sep">,</span> ' : ""}<span class="word">${escapeHtml(w)}</span><button class="speak-btn${isSpeaking ? " speaking" : ""}" data-index="${i}" ${!voiceAvailable ? "disabled" : ""} title="${voiceAvailable ? "Play" : "No voice available"}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg></button></span>`;
-    })
-    .join("");
+  // Parse markdown, then replace {{word}} markers with interactive buttons
+  let html = marked.parse(text) as string;
+  html = html.replace(/\{\{(.+?)\}\}/g, (_match, word) => wordButton(word));
 
+  appEl.innerHTML = html;
+
+  // Attach click handlers
   appEl.querySelectorAll(".speak-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
-      const idx = parseInt((btn as HTMLElement).dataset.index!, 10);
-      speak(idx);
+      const word = (btn as HTMLElement).dataset.word!;
+      speak(word);
     });
   });
 
@@ -46,7 +67,7 @@ function resizeToContent() {
   requestAnimationFrame(() => {
     const w = Math.max(appEl.scrollWidth, 100);
     const h = Math.max(appEl.scrollHeight, 24);
-    app.sendSizeChanged({ width: w + 4, height: h + 4 });
+    app.sendSizeChanged({ width: w + 8, height: h + 8 });
   });
 }
 
@@ -56,7 +77,39 @@ function escapeHtml(str: string): string {
   return el.innerHTML;
 }
 
+function escapeAttr(str: string): string {
+  return str.replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+}
+
 // ── Speech Synthesis ──────────────────────────────────────────────
+
+function pickBestVoice(voices: SpeechSynthesisVoice[], lang: string): SpeechSynthesisVoice | null {
+  const langLower = lang.toLowerCase();
+  const langPrefix = langLower.split("-")[0];
+
+  const scored = voices
+    .map((v) => {
+      const vLang = v.lang.toLowerCase();
+      const exactLang = vLang === langLower;
+      const prefixLang = vLang.startsWith(langPrefix);
+      if (!exactLang && !prefixLang) return null;
+
+      let score = exactLang ? 100 : 50;
+      const name = v.name.toLowerCase();
+
+      if (name.includes("premium")) score += 30;
+      else if (name.includes("enhanced")) score += 20;
+      if (name.includes("compact")) score -= 10;
+      if (!v.localService) score -= 5;
+
+      return { voice: v, score };
+    })
+    .filter(Boolean) as { voice: SpeechSynthesisVoice; score: number }[];
+
+  if (!scored.length) return null;
+  scored.sort((a, b) => b.score - a.score);
+  return scored[0].voice;
+}
 
 function checkVoiceAvailability() {
   const voices = speechSynthesis.getVoices();
@@ -64,50 +117,40 @@ function checkVoiceAvailability() {
     voiceAvailable = voices.length > 0;
     return;
   }
-
   const langLower = language.toLowerCase();
   const langPrefix = langLower.split("-")[0];
-
   const hasMatch = voices.some((v) => {
     const vLang = v.lang.toLowerCase();
     return vLang === langLower || vLang.startsWith(langPrefix);
   });
-
   voiceAvailable = hasMatch || voices.length > 0;
 }
 
-function speak(index: number) {
-  if (speakingIndex >= 0 || !words[index] || !voiceAvailable) return;
+function speak(word: string) {
+  if (speakingWord || !word || !voiceAvailable) return;
 
   speechSynthesis.cancel();
 
-  const utterance = new SpeechSynthesisUtterance(words[index]);
+  const utterance = new SpeechSynthesisUtterance(word);
   utterance.lang = language;
   utterance.rate = 0.85;
 
   const voices = speechSynthesis.getVoices();
-  const langLower = language.toLowerCase();
-  const langPrefix = langLower.split("-")[0];
-
-  const exactMatch = voices.find((v) => v.lang.toLowerCase() === langLower);
-  const prefixMatch = voices.find((v) =>
-    v.lang.toLowerCase().startsWith(langPrefix),
-  );
-  if (exactMatch) utterance.voice = exactMatch;
-  else if (prefixMatch) utterance.voice = prefixMatch;
+  const best = pickBestVoice(voices, language);
+  if (best) utterance.voice = best;
 
   utterance.onstart = () => {
-    speakingIndex = index;
+    speakingWord = word;
     render();
   };
 
   utterance.onend = () => {
-    speakingIndex = -1;
+    speakingWord = "";
     render();
   };
 
   utterance.onerror = () => {
-    speakingIndex = -1;
+    speakingWord = "";
     render();
   };
 
@@ -119,16 +162,6 @@ speechSynthesis.addEventListener("voiceschanged", () => {
   render();
 });
 checkVoiceAvailability();
-
-// ── Parse words ──────────────────────────────────────────────────
-
-function parseWords(raw: string | undefined): string[] {
-  if (!raw) return [];
-  return raw
-    .split(",")
-    .map((w) => w.trim())
-    .filter(Boolean);
-}
 
 // ── Host context ──────────────────────────────────────────────────
 
@@ -152,16 +185,16 @@ app.onteardown = async () => {
 };
 
 app.ontoolinputpartial = (params: any) => {
-  const w = params.arguments?.words;
+  const t = params.arguments?.text;
   const l = params.arguments?.language;
-  if (w) words = parseWords(w);
+  if (t) text = t;
   if (l) language = l;
   checkVoiceAvailability();
   render();
 };
 
 app.ontoolinput = (params: any) => {
-  words = parseWords(params.arguments?.words);
+  text = params.arguments?.text ?? "";
   language = params.arguments?.language ?? "";
   checkVoiceAvailability();
   render();
@@ -180,5 +213,5 @@ app.connect().then(() => {
   const hostCtx = app.getHostContext();
   if (hostCtx) handleHostContextChanged(hostCtx);
 
-  app.sendSizeChanged({ width: 300, height: 28 });
+  app.sendSizeChanged({ width: 600, height: 40 });
 });
