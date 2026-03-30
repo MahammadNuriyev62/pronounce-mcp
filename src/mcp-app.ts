@@ -51,17 +51,14 @@ function render() {
   html = html.replace(/\{\{(.+?)\}\}/g, (_match, word) => wordButton(word));
 
   appEl.innerHTML = html;
-
-  // Attach click handlers
-  appEl.querySelectorAll(".speak-btn").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const word = (btn as HTMLElement).dataset.word!;
-      speak(word);
-    });
-  });
-
   resizeToContent();
 }
+
+// Event delegation: survives innerHTML replacements during streaming
+appEl.addEventListener("click", (e) => {
+  const btn = (e.target as HTMLElement).closest(".speak-btn") as HTMLElement | null;
+  if (btn?.dataset.word) speak(btn.dataset.word);
+});
 
 function resizeToContent() {
   requestAnimationFrame(() => {
@@ -184,13 +181,23 @@ app.onteardown = async () => {
   return {};
 };
 
+let renderTimer: ReturnType<typeof setTimeout> | null = null;
+
+function scheduleRender() {
+  if (renderTimer) return;
+  renderTimer = setTimeout(() => {
+    renderTimer = null;
+    render();
+  }, 150);
+}
+
 app.ontoolinputpartial = (params: any) => {
   const t = params.arguments?.text;
   const l = params.arguments?.language;
   if (t) text = t;
   if (l) language = l;
   checkVoiceAvailability();
-  render();
+  scheduleRender();
 };
 
 app.ontoolinput = (params: any) => {
