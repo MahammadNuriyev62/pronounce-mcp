@@ -18,22 +18,23 @@ function createServer(): McpServer {
     {
       title: "Pronounce",
       description:
-        "Pronounce a word aloud. Renders a minimal inline play button next to the word. " +
-        "Use when the user asks to hear how a word is pronounced, says \"pronounce ...\", " +
-        "\"how do you say ...\", or during language learning. The language tag must match " +
-        "the language the word is written in.",
+        "Pronounce words aloud. Renders a compact inline list of words, each with a small " +
+        "play button. Use when the user asks to hear how words are pronounced, says " +
+        "\"pronounce ...\", \"how do you say ...\", or during language learning. " +
+        "The language tag must match the language the words are written in.",
       inputSchema: {
-        word: z.string().describe("The word or phrase to pronounce"),
+        words: z.string().describe("Comma-separated words or phrases to pronounce"),
         language: z.string().describe("BCP 47 language tag (e.g. fr-FR, ja-JP, en-US)"),
       },
       _meta: { ui: { resourceUri } },
     },
-    async ({ word, language }: { word: string; language: string }): Promise<CallToolResult> => {
+    async ({ words, language }: { words: string; language: string }): Promise<CallToolResult> => {
+      const list = words.split(",").map((w) => w.trim()).filter(Boolean);
       return {
         content: [
           {
             type: "text",
-            text: `Pronounced: ${word} (${language})`,
+            text: `Pronounced: ${list.join(", ")} (${language})`,
           },
         ],
       };

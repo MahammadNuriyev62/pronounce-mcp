@@ -10,17 +10,26 @@ body {
   overflow: hidden;
 }
 
-.pronounce {
+#app {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.item {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 4px 0;
-  font-size: 15px;
-  line-height: 1;
+  white-space: nowrap;
+}
+
+.sep {
+  color: light-dark(#9ca3af, #6b7280);
 }
 
 .word {
-  font-weight: 500;
   color: light-dark(#1f2937, #f3f4f6);
 }
 
@@ -28,24 +37,25 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
+  width: 18px;
+  height: 18px;
+  margin-left: 2px;
   border: none;
   border-radius: 50%;
-  background: light-dark(rgba(0, 0, 0, 0.06), rgba(255, 255, 255, 0.1));
-  color: light-dark(#374151, #d1d5db);
+  background: transparent;
+  color: light-dark(#9ca3af, #6b7280);
   cursor: pointer;
-  transition: background 0.15s, color 0.15s, transform 0.15s;
+  transition: color 0.15s;
   flex-shrink: 0;
+  padding: 0;
 }
 
 .speak-btn:hover:not(:disabled) {
-  background: light-dark(rgba(0, 0, 0, 0.1), rgba(255, 255, 255, 0.15));
-  color: light-dark(#111827, #f9fafb);
+  color: light-dark(#374151, #d1d5db);
 }
 
 .speak-btn:active:not(:disabled) {
-  transform: scale(0.92);
+  transform: scale(0.9);
 }
 
 .speak-btn.speaking {
@@ -53,12 +63,12 @@ body {
   animation: pulse 1s ease-in-out infinite;
 }
 
-.speak-btn.disabled {
+.speak-btn:disabled {
   opacity: 0.3;
   cursor: not-allowed;
 }
 
 @keyframes pulse {
   0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.1); }
+  50% { transform: scale(1.15); }
 }
