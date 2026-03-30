@@ -1,3 +1,5 @@
+https://github.com/user-attachments/assets/31b00a7f-db37-4740-9429-4fc6b5dab4fd
+
 # Pronounce MCP
 
 An MCP App that pronounces words aloud using browser speech synthesis. Shows an inline play button next to the word that speaks it in the requested language.
