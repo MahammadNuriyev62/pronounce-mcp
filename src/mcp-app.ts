@@ -94,10 +94,15 @@ function pickBestVoice(voices: SpeechSynthesisVoice[], lang: string): SpeechSynt
       let score = exactLang ? 100 : 50;
       const name = v.name.toLowerCase();
 
-      if (name.includes("premium")) score += 30;
-      else if (name.includes("enhanced")) score += 20;
+      // Chrome's "Google" network voices — best free option
+      if (name.startsWith("google") && !v.localService) score += 40;
+
+      // OS-level premium/enhanced/neural voices
+      if (name.includes("premium")) score += 35;
+      else if (name.includes("enhanced")) score += 25;
+      if (name.includes("neural") || name.includes("natural")) score += 20;
+
       if (name.includes("compact")) score -= 10;
-      if (!v.localService) score -= 5;
 
       return { voice: v, score };
     })
